@@ -160,8 +160,8 @@ body {
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: repeat(7, 1fr);
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     gap: 2px;
     background: #e0e0e0;
     position: relative;
@@ -241,7 +241,26 @@ body {
     background: #fca311;
 }
 
+.cell[data-type="trap"] {
+    background: #d90429;
+    color: #fff;
+}
+
+.cell[data-type="trap"] .cell-info {
+    color: #eee;
+}
+
+.cell[data-type="fee"] {
+    background: #3a0ca3;
+    color: #fff;
+}
+
+.cell[data-type="fee"] .cell-info {
+    color: #eee;
+}
+
 /* Grid Mapping */
+/* Grid Mapping for 28 cells (8x8 grid) */
 #c0 {
     grid-area: 1 / 1 / 2 / 2;
 }
@@ -271,75 +290,91 @@ body {
 }
 
 #c7 {
-    grid-area: 2 / 7 / 3 / 8;
+    grid-area: 1 / 8 / 2 / 9;
 }
 
 #c8 {
-    grid-area: 3 / 7 / 4 / 8;
+    grid-area: 2 / 8 / 3 / 9;
 }
 
 #c9 {
-    grid-area: 4 / 7 / 5 / 8;
+    grid-area: 3 / 8 / 4 / 9;
 }
 
 #c10 {
-    grid-area: 5 / 7 / 6 / 8;
+    grid-area: 4 / 8 / 5 / 9;
 }
 
 #c11 {
-    grid-area: 6 / 7 / 7 / 8;
+    grid-area: 5 / 8 / 6 / 9;
 }
 
 #c12 {
-    grid-area: 7 / 7 / 8 / 8;
+    grid-area: 6 / 8 / 7 / 9;
 }
 
 #c13 {
-    grid-area: 7 / 6 / 8 / 7;
+    grid-area: 7 / 8 / 8 / 9;
 }
 
 #c14 {
-    grid-area: 7 / 5 / 8 / 6;
+    grid-area: 8 / 8 / 9 / 9;
 }
 
 #c15 {
-    grid-area: 7 / 4 / 8 / 5;
+    grid-area: 8 / 7 / 9 / 8;
 }
 
 #c16 {
-    grid-area: 7 / 3 / 8 / 4;
+    grid-area: 8 / 6 / 9 / 7;
 }
 
 #c17 {
-    grid-area: 7 / 2 / 8 / 3;
+    grid-area: 8 / 5 / 9 / 6;
 }
 
 #c18 {
-    grid-area: 7 / 1 / 8 / 2;
+    grid-area: 8 / 4 / 9 / 5;
 }
 
 #c19 {
-    grid-area: 6 / 1 / 7 / 2;
+    grid-area: 8 / 3 / 9 / 4;
 }
 
 #c20 {
-    grid-area: 5 / 1 / 6 / 2;
+    grid-area: 8 / 2 / 9 / 3;
 }
 
 #c21 {
-    grid-area: 4 / 1 / 5 / 2;
+    grid-area: 8 / 1 / 9 / 2;
 }
 
 #c22 {
-    grid-area: 3 / 1 / 4 / 2;
+    grid-area: 7 / 1 / 8 / 2;
 }
 
 #c23 {
+    grid-area: 6 / 1 / 7 / 2;
+}
+
+#c24 {
+    grid-area: 5 / 1 / 6 / 2;
+}
+
+#c25 {
+    grid-area: 4 / 1 / 5 / 2;
+}
+
+#c26 {
+    grid-area: 3 / 1 / 4 / 2;
+}
+
+#c27 {
     grid-area: 2 / 1 / 3 / 2;
 }
 
 .center-logo {
-    grid-area: 2 / 2 / 7 / 7;
+    grid-area: 2 / 2 / 8 / 8;
     background: #fff;
     display: flex;
     flex-direction: column;
@@ -468,6 +503,11 @@ body {
     color: white;
 }
 
+#takeoverBtn {
+    background: #d90429;
+    color: white;
+}
+
 #chanceBtn {
     background: #fca311;
     color: white;
@@ -498,19 +538,32 @@ body {
 
 /* Player Token */
 .token {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     position: absolute;
-    border: 2px solid white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-    z-index: 10;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    z-index: 100;
     align-items: center;
     justify-content: center;
     display: flex;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
-    transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: tokenPop 0.3s ease-out;
+}
+
+@keyframes tokenPop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .token-container {
@@ -526,10 +579,15 @@ body {
 /* Ownership Banner */
 .owner-bar {
     width: 100%;
-    height: 6px;
+    height: 16px;
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    border-radius: 4px 4px 0 0;
 }
 
 /* Swal Custom */

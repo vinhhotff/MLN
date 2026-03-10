@@ -8,10 +8,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 4 Teams config
 let teams = {
-    team1: { id: 'team1', name: 'Tập đoàn Tư bản Đỏ', color: '#e63946', money: 40, position: 0, bankrupt: false },
-    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', money: 40, position: 0, bankrupt: false },
-    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', money: 40, position: 0, bankrupt: false },
-    team4: { id: 'team4', name: 'Cá mập Xanh Dương', color: '#457b9d', money: 40, position: 0, bankrupt: false }
+    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 20, position: 0, bankrupt: false },
+    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 20, position: 0, bankrupt: false },
+    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 20, position: 0, bankrupt: false },
+    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 20, position: 0, bankrupt: false }
 };
 
 let teamMembers = {
@@ -21,7 +21,7 @@ let teamMembers = {
     team4: new Set()
 };
 
-let boardState = Array(24).fill(null); // stores { owner: 'teamId', level: 1 }
+let boardState = Array(28).fill(null); // stores { owner: 'teamId', level: 1 }
 let turnIndex = 0;
 let teamOrder = []; // Will be determined when game starts
 let gameStarted = false;
@@ -38,7 +38,12 @@ const chances = [
     { title: "Bị Phốt!", info: "Khách hàng tố cáo chất lượng kém. Phạt 3 Tr", amount: -3 },
     { title: "Gọi Vốn Thành Công", info: "Shark đầu tư 8 Tr", amount: 8 },
     { title: "Sập Server", info: "Tốn 2 Tr bảo trì", amount: -2 },
-    { title: "Thuế Monpoly", info: "Đóng thuế Độc quyền 4 Tr", amount: -4 }
+    { title: "Thuế Monpoly", info: "Đóng thuế Độc quyền 4 Tr", amount: -4 },
+    { title: "Quỹ Đầu Tư Mạo Hiểm", info: "Nhận thêm 6 Tr vốn rót", amount: 6 },
+    { title: "Kiện Tụng Bản Quyền", info: "Thua kiện, đền bù 5 Tr", amount: -5 },
+    { title: "Đợt IPO Thành Công", info: "Cổ phiếu tăng phi mã, cộng 10 Tr", amount: 10 },
+    { title: "Hacker Tấn Công", info: "Bị tống tiền dữ liệu, mất 4 Tr", amount: -4 },
+    { title: "Thưởng Hiệu Quả", info: "Team làm việc tốt, cộng 3 Tr", amount: 3 }
 ];
 
 const globalEvents = [
@@ -162,7 +167,7 @@ io.on('connection', (socket) => {
             const dice = Math.floor(Math.random() * 6) + 1;
             const team = teams[myTeam];
             const oldPos = team.position;
-            team.position = (team.position + dice) % 24;
+            team.position = (team.position + dice) % 28;
 
             // Pass Start - Lương tỉ lệ thuận với số nhân viên!
             let msgStart = "";
@@ -178,6 +183,27 @@ io.on('connection', (socket) => {
             setTimeout(() => {
                 io.emit('gameState', getGameState());
             }, 1000);
+        }
+    });
+
+    socket.on('takeoverProperty', (propertyIndex, price) => {
+        if (!gameStarted) return;
+        if (myTeam === teamOrder[turnIndex]) {
+            const team = teams[myTeam];
+            const property = boardState[propertyIndex];
+            if (property && property.owner !== myTeam) {
+                const takeoverPrice = price * 2; // Thâu tóm tốn gấp đôi
+                if (team.money >= takeoverPrice) {
+                    const oldOwner = property.owner;
+                    team.money -= takeoverPrice;
+                    // Đối phương nhận được 1/2 số tiền thâu tóm (coi như bán lại cưỡng chế)
+                    teams[oldOwner].money += Math.floor(takeoverPrice / 2);
+                    boardState[propertyIndex] = { owner: myTeam, level: property.level };
+                    io.emit('gameState', getGameState());
+                    io.emit('actionLog', `⚔️ <b>${team.name}</b> đã THÂU TÓM thô bạo tài sản của <b>${teams[oldOwner].name}</b> tại ô ${propertyIndex}!`);
+                    checkBankrupt(oldOwner); // Có thể cứu hoặc đẩy đối phương vào phá sản
+                }
+            }
         }
     });
 

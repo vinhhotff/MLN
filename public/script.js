@@ -2,27 +2,31 @@ const socket = io();
 
 // Constants
 const spaces = [
-    { name: "TRẢ LƯƠNG", type: "start", info: "Lãnh 2 Tr" },
+    { name: "TRẢ LƯƠNG", type: "start", info: "Lãnh 2 Tr" }, // 0
     { name: "Sàn Shopee", type: "prop", price: 2, rent: 1, color: "#f94144" },
     { name: "Thuế CĐR", type: "tax", rent: 1, info: "Nộp 1 Tr" },
+    { name: "BẪY CHI PHÍ", type: "trap", info: "Mất 2 Tr", amount: 2 },
     { name: "Shopee Express", type: "prop", price: 3, rent: 1, color: "#f94144" },
     { name: "Thẻ Cơ Hội", type: "chance", info: "Rút Thẻ" },
     { name: "Shopee Mall", type: "prop", price: 4, rent: 2, color: "#f94144" },
-    { name: "SỞ CẢNH SÁT", type: "jail", info: "Tham Quan" }, // 6
+    { name: "SỞ CẢNH SÁT", type: "jail", info: "Tham Quan" }, // 7
     { name: "GrabBike", type: "prop", price: 4, rent: 2, color: "#06d6a0" },
     { name: "Thẻ Cơ Hội", type: "chance", info: "Rút Thẻ" },
+    { name: " TRẠM PHÍ", type: "fee", info: "Phí 2 Tr", amount: 2 },
     { name: "GrabFood", type: "prop", price: 5, rent: 3, color: "#06d6a0" },
     { name: "Mạng FPT", type: "prop", price: 4, rent: 2, color: "#777" },
     { name: "GrabCar", type: "prop", price: 6, rent: 3, color: "#06d6a0" },
-    { name: "BÃI ĐỖ XE", type: "parking", info: "Nghỉ Ngơi" }, // 12
+    { name: "BÃI ĐỖ XE", type: "parking", info: "Nghỉ Ngơi" }, // 14
     { name: "Kênh TikTok", type: "prop", price: 6, rent: 3, color: "#000" },
     { name: "Thẻ Cơ Hội", type: "chance", info: "Rút Thẻ" },
+    { name: "BẪY QUẢNG CÁO", type: "trap", info: "Mất 3 Tr", amount: 3 },
     { name: "TikTok Live", type: "prop", price: 7, rent: 4, color: "#000" },
     { name: "Chống Độc Quyền", type: "tax", rent: 2, info: "Nộp 2 Tr" },
     { name: "TikTok Shop", type: "prop", price: 8, rent: 4, color: "#000" },
-    { name: "BỊ ĐIỀU TRA!", type: "gotojail", info: "Lạm dụng Độc quyền" }, // 18
+    { name: "BỊ ĐIỀU TRA!", type: "gotojail", info: "Lạm dụng Độc quyền" }, // 21
     { name: "BeBike", type: "prop", price: 8, rent: 4, color: "#ffd166" },
     { name: "Thẻ Cơ Hội", type: "chance", info: "Rút Thẻ" },
+    { name: "PHÍ HỆ THỐNG", type: "fee", info: "Phí 3 Tr", amount: 3 },
     { name: "BeCar", type: "prop", price: 9, rent: 5, color: "#ffd166" },
     { name: "Mạng Viettel", type: "prop", price: 4, rent: 2, color: "#777" },
     { name: "BeFood", type: "prop", price: 10, rent: 6, color: "#ffd166" }
@@ -42,6 +46,7 @@ const rollBtn = document.getElementById('rollBtn');
 const buyBtn = document.getElementById('buyBtn');
 const upgradeBtn = document.getElementById('upgradeBtn');
 const chanceBtn = document.getElementById('chanceBtn');
+const takeoverBtn = document.getElementById('takeoverBtn');
 const endBtn = document.getElementById('endBtn');
 const diceResult = document.getElementById('dice-result');
 const diceIcon = document.getElementById('dice-icon');
@@ -152,6 +157,27 @@ chanceBtn.addEventListener('click', () => {
     socket.emit('triggerChance');
     chanceBtn.style.display = 'none';
     endBtn.disabled = false;
+});
+
+takeoverBtn.addEventListener('click', () => {
+    const team = currentGameState.teams[myTeam];
+    const pos = team.position;
+    const originalPrice = spaces[pos].price;
+    const takeoverPrice = originalPrice * 2;
+
+    Swal.fire({
+        title: 'Thâu tóm tài sản?',
+        text: `Bạn muốn chi ${takeoverPrice}M (x2 giá gốc) để thâu tóm ô này từ đối phương?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d90429',
+        confirmButtonText: 'Đồng ý thâu tóm!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            socket.emit('takeoverProperty', pos, originalPrice);
+            takeoverBtn.style.display = 'none';
+        }
+    });
 });
 
 endBtn.addEventListener('click', () => {
@@ -285,42 +311,48 @@ function handlePostRoll(pos) {
 
     addChat(`📍 Tập đoàn đi đến: <b style="color:${space.color || '#ffd166'}">${space.name}</b>`);
 
+    // Reset buttons
+    buyBtn.style.display = 'none';
+    upgradeBtn.style.display = 'none';
+    takeoverBtn.style.display = 'none';
+    chanceBtn.style.display = 'none';
+    endBtn.disabled = false;
+
     if (space.type === 'prop') {
         const ownerObj = currentGameState.boardState[pos];
-
-        buyBtn.style.display = 'none';
-        upgradeBtn.style.display = 'none';
 
         if (ownerObj === null && team.money >= space.price) {
             buyBtn.style.display = 'inline-block';
             buyBtn.disabled = false;
-            endBtn.disabled = false;
         } else if (ownerObj && ownerObj.owner === myTeam && ownerObj.level === 1 && team.money >= space.price) {
-            // Own it but only level 1 -> can upgrade
             upgradeBtn.style.display = 'inline-block';
             upgradeBtn.disabled = false;
-            endBtn.disabled = false;
         } else if (ownerObj && ownerObj.owner !== myTeam) {
             const actualRent = ownerObj.level === 2 ? space.rent * 3 : space.rent;
-            socket.emit('payRent', pos, space.rent); // The server recalculates x3, so just emit base rent
+            socket.emit('payRent', pos, space.rent);
             Swal.fire('Bị Bóc Lột!', `Bạn dẫm vào thị phần của <b>${currentGameState.teams[ownerObj.owner].name}</b>. Bị ép trả ${actualRent}Tr tiền dịch vụ!`, 'error');
-            endBtn.disabled = false;
-        } else {
-            endBtn.disabled = false;
+
+            // Show takeover option
+            if (team.money >= space.price * 2) {
+                takeoverBtn.style.display = 'inline-block';
+                takeoverBtn.disabled = false;
+            }
         }
     } else if (space.type === 'tax') {
         socket.emit('payTax', space.rent, space.info);
         Swal.fire('Đóng Thuế', `${space.name}: ${space.info}`, 'info');
-        endBtn.disabled = false;
+    } else if (space.type === 'trap') {
+        socket.emit('payTax', space.amount, space.info);
+        Swal.fire('💀 SẬP BẪY!', `${space.name}: ${space.info}`, 'error');
+    } else if (space.type === 'fee') {
+        socket.emit('payTax', space.amount, space.info);
+        Swal.fire('⛽ TRẠM PHÍ', `${space.name}: ${space.info}`, 'warning');
     } else if (space.type === 'chance') {
         chanceBtn.style.display = 'block';
         chanceBtn.disabled = false;
-        // Don't enable endBtn yet, force them to pick chance
+        endBtn.disabled = true; // Force pick chance
     } else if (space.type === 'gotojail') {
-        Swal.fire('Cảnh Cáo', 'Lạm dụng độc quyền, bị phạt (Chức năng điều tra chưa kích hoạt hoàn toàn nên bạn chỉ bị nhắc nhở)', 'warning');
-        endBtn.disabled = false;
-    } else {
-        endBtn.disabled = false;
+        Swal.fire('Cảnh Cáo', 'Lạm dụng độc quyền, bị phạt nhắc nhở!', 'warning');
     }
 }
 
@@ -340,7 +372,7 @@ function updateUI() {
     }
 
     // Clear tokens
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 28; i++) {
         const tc = document.getElementById(`tc-${i}`);
         const own = document.getElementById(`own-${i}`);
         if (tc) tc.innerHTML = '';
@@ -376,26 +408,30 @@ function updateUI() {
 
         card.innerHTML = `
             <div class="info" style="${t.bankrupt ? 'text-decoration: line-through; opacity: 0.5;' : ''}">
-                <h4>${t.name} ${id === myTeam ? '<span style="color:#ffd166; font-size:0.8rem; margin-left:5px;">(Bạn)</span>' : ''}</h4>
+                <h4><i class="fas ${t.icon}"></i> ${t.name} ${id === myTeam ? '<span style="color:#ffd166; font-size:0.8rem; margin-left:5px;">(Bạn)</span>' : ''}</h4>
                 <div class="members"><i class="fas fa-users"></i> ${count} thành viên</div>
             </div>
             <div class="money">${bankruptLabel} ${t.bankrupt ? '' : t.money + 'M'}</div>
         `;
         playersListDiv.appendChild(card);
 
-        // Token
-        if (!t.bankrupt) {
+        // Token - Only show if team has members and is not bankrupt
+        if (!t.bankrupt && count > 0) {
             const token = document.createElement('div');
             token.className = 'token';
             token.style.background = t.color;
             token.style.color = '#fff';
-            token.innerHTML = `<i class="fas fa-building"></i>`;
 
-            const existing = document.getElementById(`tc-${t.position}`).children.length;
-            const offsets = [[0, 0], [15, 15], [-15, 15], [15, -15]];
-            token.style.transform = `translate(${offsets[existing % 4][0]}px, ${offsets[existing % 4][1]}px)`;
+            // Use team icon for token
+            token.innerHTML = `<i class="fas ${t.icon}" style="font-size:10px;"></i>`;
 
-            document.getElementById(`tc-${t.position}`).appendChild(token);
+            const tc = document.getElementById(`tc-${t.position}`);
+            if (tc) {
+                const existing = tc.children.length;
+                const offsets = [[0, 0], [15, 15], [-15, 15], [15, -15], [0, 15], [0, -15]];
+                token.style.transform = `translate(${offsets[existing % 6][0]}px, ${offsets[existing % 6][1]}px)`;
+                tc.appendChild(token);
+            }
         }
     });
 
@@ -403,11 +439,12 @@ function updateUI() {
     boardState.forEach((obj, index) => {
         if (obj && teams[obj.owner]) {
             const banner = document.getElementById(`own-${index}`);
-            banner.style.background = teams[obj.owner].color;
+            const team = teams[obj.owner];
+            banner.style.background = team.color;
+            banner.innerHTML = `<i class="fas ${team.icon}" style="font-size:8px; color:rgba(255,255,255,0.8); margin-left:3px;"></i>`;
+
             if (obj.level === 2) {
-                banner.innerHTML = '<i class="fas fa-crown" style="position:absolute; top:-15px; left:50%; transform:translateX(-50%); color:#ffd166; font-size:14px; text-shadow:0 0 5px rgba(0,0,0,0.8);"></i>';
-            } else {
-                banner.innerHTML = '';
+                banner.innerHTML += '<i class="fas fa-crown" style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); color:#ffd166; font-size:14px; text-shadow:0 0 5px rgba(0,0,0,0.8);"></i>';
             }
         }
     });
@@ -433,6 +470,7 @@ function updateUI() {
         rollBtn.disabled = true;
         buyBtn.disabled = true;
         upgradeBtn.disabled = true;
+        takeoverBtn.style.display = 'none';
         chanceBtn.style.display = 'none';
         endBtn.disabled = true;
         workBtn.style.display = 'none'; // Kẻ phá sản không được cày OT
@@ -449,6 +487,7 @@ function updateUI() {
         buyBtn.style.display = 'inline-block';
         upgradeBtn.disabled = true;
         upgradeBtn.style.display = 'none';
+        takeoverBtn.style.display = 'none';
         chanceBtn.style.display = 'none';
         endBtn.disabled = true;
     }
@@ -467,6 +506,7 @@ socket.on('gameState', (state) => {
         buyBtn.style.display = 'inline-block';
         buyBtn.disabled = true;
         upgradeBtn.style.display = 'none';
+        takeoverBtn.style.display = 'none';
         endBtn.disabled = true;
         chanceBtn.style.display = 'none';
         diceResult.textContent = '?';
