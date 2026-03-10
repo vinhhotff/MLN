@@ -120,7 +120,6 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
-    perspective: 1200px;
 }
 
 #dice-container {
@@ -134,8 +133,6 @@ body {
     text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
     min-height: 80px;
     width: 100%;
-    transform-style: preserve-3d;
-    z-index: 50;
 }
 
 #dice-result {
@@ -149,25 +146,16 @@ body {
 }
 
 #board-container {
-    width: 75vh;
-    max-width: 750px;
+    width: 85vh;
+    /* Bigger board */
+    max-width: 850px;
     aspect-ratio: 1;
-    border: 15px solid #2a9d8f;
+    border: 10px solid #2a9d8f;
     border-radius: 15px;
     background: #fff;
     position: relative;
     display: flex;
-    box-shadow:
-        -1px 1px 0 #1c6b61, -2px 2px 0 #1c6b61, -3px 3px 0 #1c6b61, -4px 4px 0 #1c6b61, -5px 5px 0 #1c6b61,
-        -6px 6px 0 #1c6b61, -7px 7px 0 #1c6b61, -8px 8px 0 #1c6b61, -9px 9px 0 #1c6b61, -10px 10px 0 #1c6b61,
-        -15px 15px 30px rgba(0, 0, 0, 0.7);
-    transform-style: preserve-3d;
-    transform: rotateX(55deg) rotateZ(-45deg);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-#board-container:hover {
-    transform: rotateX(50deg) rotateZ(-40deg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 #board {
@@ -192,14 +180,12 @@ body {
     border: 1px solid #ccc;
     position: relative;
     padding: 0;
-    transition: background 0.3s, transform 0.2s;
-    transform-style: preserve-3d;
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 .cell:hover {
     background: #fff;
-    transform: translateZ(5px);
-    box-shadow: 0 0 15px rgba(255, 209, 102, 0.8);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
     z-index: 10;
 }
 
@@ -561,56 +547,32 @@ body {
 
 /* Player Token */
 .token {
-    width: 28px;
-    height: 38px;
-    border-radius: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     position: absolute;
-    border: 2px solid white;
-    box-shadow:
-        inset -3px -3px 10px rgba(0, 0, 0, 0.5),
-        inset 3px 3px 10px rgba(255, 255, 255, 0.7),
-        0px 10px 10px rgba(0, 0, 0, 0.6);
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
     z-index: 100;
     align-items: center;
     justify-content: center;
     display: flex;
     font-size: 14px;
     font-weight: bold;
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    /* Bouncy move */
-    animation: tokenPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    transform-style: preserve-3d;
-}
-
-/* Add a pseudo-element for token base/shadow */
-.token::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    width: 20px;
-    height: 10px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 50%;
-    filter: blur(3px);
-    z-index: -1;
-    transform: translateZ(-10px);
+    transition: all 0.5s ease-out;
+    animation: tokenPop 0.4s ease-out;
 }
 
 @keyframes tokenPop {
     0% {
-        transform: rotateZ(45deg) rotateX(-55deg) scale(0) translateZ(50px);
+        transform: scale(0.5);
         opacity: 0;
     }
 
     100% {
-        transform: rotateZ(45deg) rotateX(-55deg) scale(1) translateZ(10px);
+        transform: scale(1);
         opacity: 1;
     }
-}
-
-.token {
-    transform: rotateZ(45deg) rotateX(-55deg) translateZ(10px);
-    /* Stand upright */
 }
 
 .token-container {
@@ -621,7 +583,6 @@ body {
     height: 100%;
     pointer-events: none;
     z-index: 20;
-    transform-style: preserve-3d;
 }
 
 /* Ownership Banner */
@@ -651,32 +612,80 @@ body {
 /* ---- NEW ANIMATIONS ---- */
 @keyframes diceRollAnim {
     0% {
-        transform: rotate3d(1, 1, 1, 0deg) scale(1) translateY(0) translateZ(0);
+        transform: rotate(0deg) scale(1) translateY(0);
     }
 
     25% {
-        transform: rotate3d(1, 0, 1, 90deg) scale(1.4) translateY(-40px) translateZ(30px);
-        text-shadow: 0 20px 20px rgba(0, 0, 0, 0.4);
+        transform: rotate(90deg) scale(1.2) translateY(-30px);
     }
 
     50% {
-        transform: rotate3d(0, 1, 1, 180deg) scale(1) translateY(0) translateZ(0);
-        text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+        transform: rotate(180deg) scale(1) translateY(0);
     }
 
     75% {
-        transform: rotate3d(1, 1, 0, 270deg) scale(1.4) translateY(-20px) translateZ(20px);
-        text-shadow: 0 20px 20px rgba(0, 0, 0, 0.4);
+        transform: rotate(270deg) scale(1.2) translateY(-20px);
     }
 
     100% {
-        transform: rotate3d(1, 1, 1, 360deg) scale(1) translateY(0) translateZ(0);
+        transform: rotate(360deg) scale(1) translateY(0);
     }
 }
 
 .dice-rolling {
-    animation: diceRollAnim 0.5s ease-in-out infinite;
+    animation: diceRollAnim 0.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
     display: inline-block;
+}
+
+@keyframes screenShake {
+    0% {
+        transform: translate(1px, 1px) rotate(0deg);
+    }
+
+    10% {
+        transform: translate(-1px, -2px) rotate(-1deg);
+    }
+
+    20% {
+        transform: translate(-3px, 0px) rotate(1deg);
+    }
+
+    30% {
+        transform: translate(3px, 2px) rotate(0deg);
+    }
+
+    40% {
+        transform: translate(1px, -1px) rotate(1deg);
+    }
+
+    50% {
+        transform: translate(-1px, 2px) rotate(-1deg);
+    }
+
+    60% {
+        transform: translate(-3px, 1px) rotate(0deg);
+    }
+
+    70% {
+        transform: translate(3px, 1px) rotate(-1deg);
+    }
+
+    80% {
+        transform: translate(-1px, -1px) rotate(1deg);
+    }
+
+    90% {
+        transform: translate(1px, 2px) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(1px, -2px) rotate(-1deg);
+    }
+}
+
+.shake-danger {
+    animation: screenShake 0.5s;
+    animation-iteration-count: 1;
 }
 
 @keyframes pulseTurn {

@@ -342,7 +342,9 @@ function handlePostRoll(pos) {
         } else if (ownerObj && ownerObj.owner !== myTeam) {
             const actualRent = ownerObj.level === 2 ? space.rent * 3 : space.rent;
             socket.emit('payRent', pos);
-            Swal.fire('Bị Bóc Lột!', `Bạn dẫm vào thị phần của <b>${currentGameState.teams[ownerObj.owner].name}</b>. Bị ép trả ${actualRent}Tr tiền dịch vụ!`, 'error');
+            document.body.classList.add('shake-danger');
+            setTimeout(() => document.body.classList.remove('shake-danger'), 500);
+            Swal.fire({ title: 'Bị Bóc Lột!', html: `Bạn dẫm vào thị phần của <b>${currentGameState.teams[ownerObj.owner].name}</b>. Bị ép trả <b style="color:#d90429">${actualRent}Tr</b> tiền dịch vụ!`, icon: 'error', confirmButtonColor: '#d90429' });
 
             // Chỉ cho thâu tóm nếu tài sản CHƯA được nâng cấp Độc quyền (level < 2)
             if (ownerObj.level < 2 && team.money >= space.price * 2) {
@@ -352,13 +354,19 @@ function handlePostRoll(pos) {
         }
     } else if (space.type === 'tax') {
         socket.emit('payTax', space.rent, space.info);
-        Swal.fire('Đóng Thuế', `${space.name}: ${space.info}`, 'info');
+        document.body.classList.add('shake-danger');
+        setTimeout(() => document.body.classList.remove('shake-danger'), 500);
+        Swal.fire({ title: 'Đóng Thuế', text: `${space.name}: ${space.info}`, icon: 'info', confirmButtonColor: '#fca311' });
     } else if (space.type === 'trap') {
         socket.emit('payTax', space.amount, space.info);
-        Swal.fire('💀 SẬP BẪY!', `${space.name}: ${space.info}`, 'error');
+        document.body.classList.add('shake-danger');
+        setTimeout(() => document.body.classList.remove('shake-danger'), 500);
+        Swal.fire({ title: '💀 SẬP BẪY!', text: `${space.name}: ${space.info}`, icon: 'error', confirmButtonColor: '#d90429' });
     } else if (space.type === 'fee') {
         socket.emit('payTax', space.amount, space.info);
-        Swal.fire('⛽ TRẠM PHÍ', `${space.name}: ${space.info}`, 'warning');
+        document.body.classList.add('shake-danger');
+        setTimeout(() => document.body.classList.remove('shake-danger'), 500);
+        Swal.fire({ title: '⛽ TRẠM PHÍ', text: `${space.name}: ${space.info}`, icon: 'warning', confirmButtonColor: '#3a0ca3' });
     } else if (space.type === 'chance') {
         chanceBtn.style.display = 'block';
         chanceBtn.disabled = false;
