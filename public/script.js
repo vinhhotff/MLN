@@ -55,6 +55,16 @@ const workBtn = document.getElementById('workBtn');
 let myTeam = null;
 let playerName = "";
 let currentGameState = null;
+let teamTokens = {}; // Store persistent tokens
+let resizeTimeout = null;
+
+// Handle window resize to reposition tokens
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (currentGameState) updateUI();
+    }, 100);
+});
 
 // Initialize Board
 function createBoard() {
@@ -124,7 +134,7 @@ rollBtn.addEventListener('click', () => {
 buyBtn.addEventListener('click', () => {
     const team = currentGameState.teams[myTeam];
     const pos = team.position;
-    socket.emit('buyProperty', pos, spaces[pos].price);
+    socket.emit('buyProperty', pos);
     buyBtn.disabled = true;
     buyBtn.style.display = 'none';
     Swal.fire({
@@ -140,7 +150,7 @@ buyBtn.addEventListener('click', () => {
 upgradeBtn.addEventListener('click', () => {
     const team = currentGameState.teams[myTeam];
     const pos = team.position;
-    socket.emit('upgradeProperty', pos, spaces[pos].price);
+    socket.emit('upgradeProperty', pos);
     upgradeBtn.disabled = true;
     upgradeBtn.style.display = 'none';
     Swal.fire({
@@ -174,7 +184,7 @@ takeoverBtn.addEventListener('click', () => {
         confirmButtonText: 'Đồng ý thâu tóm!'
     }).then((result) => {
         if (result.isConfirmed) {
-            socket.emit('takeoverProperty', pos, originalPrice);
+            socket.emit('takeoverProperty', pos);
             takeoverBtn.style.display = 'none';
         }
     });
@@ -259,8 +269,10 @@ socket.on('diceRolled', (data) => {
     // Animate dice
     diceResult.style.display = 'none';
     diceIcon.style.display = 'inline-block';
+    diceIcon.classList.add('dice-rolling');
 
     setTimeout(() => {
+        diceIcon.classList.remove('dice-rolling');
         diceIcon.style.display = 'none';
         diceResult.style.display = 'block';
         diceResult.textContent = dice;
@@ -329,11 +341,11 @@ function handlePostRoll(pos) {
             upgradeBtn.disabled = false;
         } else if (ownerObj && ownerObj.owner !== myTeam) {
             const actualRent = ownerObj.level === 2 ? space.rent * 3 : space.rent;
-            socket.emit('payRent', pos, space.rent);
+            socket.emit('payRent', pos);
             Swal.fire('Bị Bóc Lột!', `Bạn dẫm vào thị phần của <b>${currentGameState.teams[ownerObj.owner].name}</b>. Bị ép trả ${actualRent}Tr tiền dịch vụ!`, 'error');
 
-            // Show takeover option
-            if (team.money >= space.price * 2) {
+            // Chỉ cho thâu tóm nếu tài sản CHƯA được nâng cấp Độc quyền (level < 2)
+            if (ownerObj.level < 2 && team.money >= space.price * 2) {
                 takeoverBtn.style.display = 'inline-block';
                 takeoverBtn.disabled = false;
             }
@@ -371,16 +383,17 @@ function updateUI() {
         }
     }
 
-    // Clear tokens
+    // Clear ownership banners
     for (let i = 0; i < 28; i++) {
-        const tc = document.getElementById(`tc-${i}`);
         const own = document.getElementById(`own-${i}`);
-        if (tc) tc.innerHTML = '';
         if (own) {
             own.style.background = 'transparent';
             own.innerHTML = '';
         }
     }
+
+    let cellOccupants = {};
+    for (let i = 0; i < 28; i++) cellOccupants[i] = 0;
 
     // Teams List & Tokens
     playersListDiv.innerHTML = gameStarted ? '<h3>Thị Trường (Đang Hoạt Động)</h3>' : '<h3>Thị Trường (Đang Chờ...)</h3>';
@@ -417,20 +430,46 @@ function updateUI() {
 
         // Token - Only show if team has members and is not bankrupt
         if (!t.bankrupt && count > 0) {
-            const token = document.createElement('div');
-            token.className = 'token';
-            token.style.background = t.color;
-            token.style.color = '#fff';
+            let token = teamTokens[id];
+            if (!token) {
+                token = document.createElement('div');
+                token.className = 'token';
+                token.id = 'token-' + id;
+                token.style.background = t.color;
+                token.style.color = '#fff';
+                token.innerHTML = `<i class="fas ${t.icon}" style="font-size:10px;"></i>`;
+                boardDiv.appendChild(token);
+                teamTokens[id] = token;
+            }
 
-            // Use team icon for token
-            token.innerHTML = `<i class="fas ${t.icon}" style="font-size:10px;"></i>`;
+            const cell = document.getElementById(`c${t.position}`);
+            if (cell) {
+                const existing = cellOccupants[t.position];
+                cellOccupants[t.position]++;
 
-            const tc = document.getElementById(`tc-${t.position}`);
-            if (tc) {
-                const existing = tc.children.length;
                 const offsets = [[0, 0], [15, 15], [-15, 15], [15, -15], [0, 15], [0, -15]];
-                token.style.transform = `translate(${offsets[existing % 6][0]}px, ${offsets[existing % 6][1]}px)`;
-                tc.appendChild(token);
+                const offX = offsets[existing % 6][0];
+                const offY = offsets[existing % 6][1];
+
+                const rect = cell.getBoundingClientRect();
+                const boardRect = boardDiv.getBoundingClientRect();
+                const left = rect.left - boardRect.left + (rect.width / 2) - 14 + offX;
+                const top = rect.top - boardRect.top + (rect.height / 2) - 14 + offY;
+
+                token.style.left = left + 'px';
+                token.style.top = top + 'px';
+
+                // Toggle active token layer/shadow
+                if (id === turn) {
+                    token.classList.add('active-turn');
+                } else {
+                    token.classList.remove('active-turn');
+                }
+            }
+        } else {
+            if (teamTokens[id]) {
+                teamTokens[id].remove();
+                delete teamTokens[id];
             }
         }
     });

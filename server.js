@@ -46,6 +46,43 @@ const chances = [
     { title: "Thưởng Hiệu Quả", info: "Team làm việc tốt, cộng 3 Tr", amount: 3 }
 ];
 
+// Server-side spaces data (dùng để tính rent/price phía server, không tin client)
+const spaces = [
+    { name: "TRẢ LƯƠNG", type: "start" },
+    { name: "Sàn Shopee", type: "prop", price: 2, rent: 1 },
+    { name: "Thuế CĐR", type: "tax", rent: 1 },
+    { name: "BẪY CHI PHÍ", type: "trap", amount: 2 },
+    { name: "Shopee Express", type: "prop", price: 3, rent: 1 },
+    { name: "Thẻ Cơ Hội", type: "chance" },
+    { name: "Shopee Mall", type: "prop", price: 4, rent: 2 },
+    { name: "SỞ CẢNH SÁT", type: "jail" },
+    { name: "GrabBike", type: "prop", price: 4, rent: 2 },
+    { name: "Thẻ Cơ Hội", type: "chance" },
+    { name: "TRẠM PHÍ", type: "fee", amount: 2 },
+    { name: "GrabFood", type: "prop", price: 5, rent: 3 },
+    { name: "Mạng FPT", type: "prop", price: 4, rent: 2 },
+    { name: "GrabCar", type: "prop", price: 6, rent: 3 },
+    { name: "BÃI ĐỖ XE", type: "parking" },
+    { name: "Kênh TikTok", type: "prop", price: 6, rent: 3 },
+    { name: "Thẻ Cơ Hội", type: "chance" },
+    { name: "BẪY QUẢNG CÁO", type: "trap", amount: 3 },
+    { name: "TikTok Live", type: "prop", price: 7, rent: 4 },
+    { name: "Chống Độc Quyền", type: "tax", rent: 2 },
+    { name: "TikTok Shop", type: "prop", price: 8, rent: 4 },
+    { name: "BỊ ĐIỀU TRA!", type: "gotojail" },
+    { name: "BeBike", type: "prop", price: 8, rent: 4 },
+    { name: "Thẻ Cơ Hội", type: "chance" },
+    { name: "PHÍ HỆ THỐNG", type: "fee", amount: 3 },
+    { name: "BeCar", type: "prop", price: 9, rent: 5 },
+    { name: "Mạng Viettel", type: "prop", price: 4, rent: 2 },
+    { name: "BeFood", type: "prop", price: 10, rent: 6 }
+];
+
+function getSpaceData(index) {
+    if (index >= 0 && index < spaces.length) return spaces[index];
+    return null;
+}
+
 const globalEvents = [
     { name: "Bão Sale 11/11", desc: "Doanh số bùng nổ, mọi Tập đoàn được bơm 5 Tr vốn!", amount: 5 },
     { name: "Khủng hoảng Kinh tế", desc: "Nhu cầu giảm, mỗi bên chịu thiệt 3 Tr!", amount: -3 },
@@ -186,13 +223,20 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('takeoverProperty', (propertyIndex, price) => {
+    socket.on('takeoverProperty', (propertyIndex) => {
         if (!gameStarted) return;
         if (myTeam === teamOrder[turnIndex]) {
             const team = teams[myTeam];
             const property = boardState[propertyIndex];
             if (property && property.owner !== myTeam) {
-                const takeoverPrice = price * 2; // Thâu tóm tốn gấp đôi
+                // Không thể thâu tóm tài sản đã nâng cấp Độc quyền (level 2)
+                if (property.level >= 2) {
+                    socket.emit('errorMsg', 'Tài sản đã được nâng cấp Độc quyền, không thể thâu tóm!');
+                    return;
+                }
+                const spaceData = getSpaceData(propertyIndex);
+                if (!spaceData || spaceData.type !== 'prop') return;
+                const takeoverPrice = spaceData.price * 2; // Thâu tóm tốn gấp đôi
                 if (team.money >= takeoverPrice) {
                     const oldOwner = property.owner;
                     team.money -= takeoverPrice;
@@ -221,10 +265,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('buyProperty', (propertyIndex, price) => {
+    socket.on('buyProperty', (propertyIndex) => {
         if (!gameStarted) return;
         if (myTeam === teamOrder[turnIndex]) {
             const team = teams[myTeam];
+            const spaceData = getSpaceData(propertyIndex);
+            if (!spaceData || spaceData.type !== 'prop') return;
+            const price = spaceData.price;
             if (team.money >= price && boardState[propertyIndex] === null) {
                 team.money -= price;
                 boardState[propertyIndex] = { owner: myTeam, level: 1 };
@@ -234,10 +281,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('upgradeProperty', (propertyIndex, price) => {
+    socket.on('upgradeProperty', (propertyIndex) => {
         if (!gameStarted) return;
         if (myTeam === teamOrder[turnIndex]) {
             const team = teams[myTeam];
+            const spaceData = getSpaceData(propertyIndex);
+            if (!spaceData || spaceData.type !== 'prop') return;
+            const price = spaceData.price;
             if (team.money >= price && boardState[propertyIndex] && boardState[propertyIndex].owner === myTeam && boardState[propertyIndex].level === 1) {
                 team.money -= price;
                 boardState[propertyIndex].level = 2; // Level 2: Monopoly
@@ -247,14 +297,18 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('payRent', (propertyIndex, rentAmount) => {
+    socket.on('payRent', (propertyIndex) => {
         if (!gameStarted) return;
         if (myTeam === teamOrder[turnIndex] && !turnState.hasPaidRentOrTax) {
             turnState.hasPaidRentOrTax = true;
             const team = teams[myTeam];
             const ownerObj = boardState[propertyIndex];
             if (ownerObj && ownerObj.owner !== myTeam) {
-                const actualRent = ownerObj.level === 2 ? rentAmount * 3 : rentAmount;
+                // Tính rent từ server-side data, không tin client
+                const spaceData = getSpaceData(propertyIndex);
+                if (!spaceData) return;
+                const baseRent = spaceData.rent;
+                const actualRent = ownerObj.level === 2 ? baseRent * 3 : baseRent;
                 team.money -= actualRent;
                 teams[ownerObj.owner].money += actualRent;
                 io.emit('actionLog', `💸 <b>${team.name}</b> bị <b>${teams[ownerObj.owner].name}</b> bóc lột ${actualRent} Tr!`);
