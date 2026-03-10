@@ -5,13 +5,21 @@ const io = require('socket.io')(http);
 const path = require('path');
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+app.post('/logError', (req, res) => {
+    console.error("============= CLIENT ERROR LOG =============");
+    console.error(req.body);
+    console.error("============================================");
+    res.sendStatus(200);
+});
 
 // 4 Teams config
 let teams = {
-    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 20, position: 0, bankrupt: false },
-    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 20, position: 0, bankrupt: false },
-    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 20, position: 0, bankrupt: false },
-    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 20, position: 0, bankrupt: false }
+    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 100, position: 0, bankrupt: false },
+    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 100, position: 0, bankrupt: false },
+    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 100, position: 0, bankrupt: false },
+    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 100, position: 0, bankrupt: false }
 };
 
 let teamMembers = {
@@ -34,48 +42,48 @@ let turnState = {
 };
 
 const chances = [
-    { title: "Lên Xu Hướng!", info: "Video TikTok của bạn viral. Lãnh 4 Tr", amount: 4 },
-    { title: "Bị Phốt!", info: "Khách hàng tố cáo chất lượng kém. Phạt 3 Tr", amount: -3 },
-    { title: "Gọi Vốn Thành Công", info: "Shark đầu tư 8 Tr", amount: 8 },
-    { title: "Sập Server", info: "Tốn 2 Tr bảo trì", amount: -2 },
-    { title: "Thuế Monpoly", info: "Đóng thuế Độc quyền 4 Tr", amount: -4 },
-    { title: "Quỹ Đầu Tư Mạo Hiểm", info: "Nhận thêm 6 Tr vốn rót", amount: 6 },
-    { title: "Kiện Tụng Bản Quyền", info: "Thua kiện, đền bù 5 Tr", amount: -5 },
-    { title: "Đợt IPO Thành Công", info: "Cổ phiếu tăng phi mã, cộng 10 Tr", amount: 10 },
-    { title: "Hacker Tấn Công", info: "Bị tống tiền dữ liệu, mất 4 Tr", amount: -4 },
-    { title: "Thưởng Hiệu Quả", info: "Team làm việc tốt, cộng 3 Tr", amount: 3 }
+    { title: "Lên Xu Hướng!", info: "Video TikTok của bạn viral. Lãnh 15 Tr", amount: 15 },
+    { title: "Bị Phốt!", info: "Khách hàng tố cáo chất lượng kém. Phạt 10 Tr", amount: -10 },
+    { title: "Gọi Vốn Thành Công", info: "Shark đầu tư 20 Tr", amount: 20 },
+    { title: "Sập Server", info: "Tốn 8 Tr bảo trì", amount: -8 },
+    { title: "Thuế Monpoly", info: "Đóng thuế Độc quyền 12 Tr", amount: -12 },
+    { title: "Quỹ Đầu Tư Mạo Hiểm", info: "Nhận thêm 18 Tr vốn rót", amount: 18 },
+    { title: "Kiện Tụng Bản Quyền", info: "Thua kiện, đền bù 15 Tr", amount: -15 },
+    { title: "Đợt IPO Thành Công", info: "Cổ phiếu tăng phi mã, cộng 30 Tr", amount: 30 },
+    { title: "Hacker Tấn Công", info: "Bị tống tiền dữ liệu, mất 12 Tr", amount: -12 },
+    { title: "Thưởng Hiệu Quả", info: "Team làm việc tốt, cộng 10 Tr", amount: 10 }
 ];
 
 // Server-side spaces data (dùng để tính rent/price phía server, không tin client)
 const spaces = [
     { name: "TRẢ LƯƠNG", type: "start" },
-    { name: "Sàn Shopee", type: "prop", price: 2, rent: 1 },
-    { name: "Thuế CĐR", type: "tax", rent: 1 },
-    { name: "BẪY CHI PHÍ", type: "trap", amount: 2 },
-    { name: "Shopee Express", type: "prop", price: 3, rent: 1 },
+    { name: "Sàn Shopee", type: "prop", price: 10, rent: 4 },
+    { name: "Thuế CĐR", type: "tax", rent: 5 },
+    { name: "BẪY CHI PHÍ", type: "trap", amount: 6 },
+    { name: "Shopee Express", type: "prop", price: 12, rent: 5 },
     { name: "Thẻ Cơ Hội", type: "chance" },
-    { name: "Shopee Mall", type: "prop", price: 4, rent: 2 },
+    { name: "Shopee Mall", type: "prop", price: 15, rent: 8 },
     { name: "SỞ CẢNH SÁT", type: "jail" },
-    { name: "GrabBike", type: "prop", price: 4, rent: 2 },
+    { name: "GrabBike", type: "prop", price: 15, rent: 8 },
     { name: "Thẻ Cơ Hội", type: "chance" },
-    { name: "TRẠM PHÍ", type: "fee", amount: 2 },
-    { name: "GrabFood", type: "prop", price: 5, rent: 3 },
-    { name: "Mạng FPT", type: "prop", price: 4, rent: 2 },
-    { name: "GrabCar", type: "prop", price: 6, rent: 3 },
+    { name: "TRẠM PHÍ", type: "fee", amount: 6 },
+    { name: "GrabFood", type: "prop", price: 18, rent: 10 },
+    { name: "Mạng FPT", type: "prop", price: 16, rent: 8 },
+    { name: "GrabCar", type: "prop", price: 20, rent: 12 },
     { name: "BÃI ĐỖ XE", type: "parking" },
-    { name: "Kênh TikTok", type: "prop", price: 6, rent: 3 },
+    { name: "Kênh TikTok", type: "prop", price: 22, rent: 14 },
     { name: "Thẻ Cơ Hội", type: "chance" },
-    { name: "BẪY QUẢNG CÁO", type: "trap", amount: 3 },
-    { name: "TikTok Live", type: "prop", price: 7, rent: 4 },
-    { name: "Chống Độc Quyền", type: "tax", rent: 2 },
-    { name: "TikTok Shop", type: "prop", price: 8, rent: 4 },
+    { name: "BẪY QUẢNG CÁO", type: "trap", amount: 10 },
+    { name: "TikTok Live", type: "prop", price: 25, rent: 16 },
+    { name: "Chống Độc Quyền", type: "tax", rent: 12 },
+    { name: "TikTok Shop", type: "prop", price: 28, rent: 18 },
     { name: "BỊ ĐIỀU TRA!", type: "gotojail" },
-    { name: "BeBike", type: "prop", price: 8, rent: 4 },
+    { name: "BeBike", type: "prop", price: 30, rent: 20 },
     { name: "Thẻ Cơ Hội", type: "chance" },
-    { name: "PHÍ HỆ THỐNG", type: "fee", amount: 3 },
-    { name: "BeCar", type: "prop", price: 9, rent: 5 },
-    { name: "Mạng Viettel", type: "prop", price: 4, rent: 2 },
-    { name: "BeFood", type: "prop", price: 10, rent: 6 }
+    { name: "PHÍ HỆ THỐNG", type: "fee", amount: 15 },
+    { name: "BeCar", type: "prop", price: 35, rent: 25 },
+    { name: "Mạng Viettel", type: "prop", price: 20, rent: 10 },
+    { name: "BeFood", type: "prop", price: 40, rent: 30 }
 ];
 
 function getSpaceData(index) {
@@ -94,7 +102,7 @@ io.on('connection', (socket) => {
 
     socket.on('joinTeam', (teamId, playerName) => {
         if (gameStarted && !teamOrder.includes(teamId)) {
-            socket.emit('errorMsg', `Trò chơi đã bắt đầu và Tập đoàn này không tham gia. Vui lòng chọn phe khác đang thi đấu: ${teamOrder.map(id => teams[id].name).join(', ')}`);
+            socket.emit('errorMsg', `Trò chơi đã bắt đầu và Tập đoàn này không tham gia.Vui lòng chọn phe khác đang thi đấu: ${teamOrder.map(id => teams[id].name).join(', ')} `);
             return;
         }
         if (teamMembers[teamId].size >= 5) {
@@ -109,7 +117,7 @@ io.on('connection', (socket) => {
         const teamInfo = teams[teamId];
 
         io.emit('gameState', getGameState());
-        io.emit('chatMessage', `👋 <b>${playerName}</b> vừa gia nhập <b>${teamInfo.name}</b>!`);
+        io.emit('chatMessage', `👋 <b>${playerName}</b> vừa gia nhập < b > ${teamInfo.name}</b > !`);
         socket.emit('joinSuccess');
 
         // Start countdown if first person joins
@@ -141,7 +149,7 @@ io.on('connection', (socket) => {
         // Use default order if somehow no one is there (should not happen)
         if (teamOrder.length === 0) {
             gameStarted = false;
-            countdownTimer = 60;
+            countdownTimer = 1;
             return;
         }
 
@@ -154,11 +162,19 @@ io.on('connection', (socket) => {
 
         io.emit('gameStarted', { teamOrder });
         io.emit('gameState', getGameState());
-        io.emit('actionLog', `🎮 <b style="color:#06d6a0; text-transform:uppercase;">TRÒ CHƠI BẮT ĐẦU!</b> Thứ tự lượt đi: ${teamOrder.map(id => teams[id].name).join(' → ')}`);
+        io.emit('actionLog', `🎮 <b style="color:#06d6a0; text-transform:uppercase;">TRÒ CHƠI BẮT ĐẦU!</b> Thứ tự lượt đi: ${teamOrder.map(id => teams[id].name).join(' → ')} `);
     }
 
     function checkBankrupt(teamId) {
         if (teams[teamId].money < 0 && !teams[teamId].bankrupt) {
+            // Check if they have properties to sell
+            const properties = boardState.filter((b, i) => b && b.owner === teamId);
+            if (properties.length > 0) {
+                // Not bankrupt yet, give them a chance to sell
+                io.emit('actionLog', `⚠️ <b>${teams[teamId].name}</b> đang mắc nợ <b>${Math.abs(teams[teamId].money)}M</b>! Hãy bán bớt tài sản để trả nợ.`);
+                return;
+            }
+
             teams[teamId].bankrupt = true;
             // Clear their properties
             for (let i = 0; i < boardState.length; i++) {
@@ -166,7 +182,7 @@ io.on('connection', (socket) => {
                     boardState[i] = null;
                 }
             }
-            io.emit('actionLog', `💥 <b style="color:#d90429; font-size:1.1rem; text-transform:uppercase;">${teams[teamId].name} ĐÃ PHÁ SẢN!</b> Mọi tài sản bị ném ra thị trường tự do!`);
+            io.emit('actionLog', `💥 <b style="color:#d90429; font-size:1.1rem; text-transform:uppercase;">${teams[teamId].name} ĐÃ PHÁ SẢN!</b> Mọi tài sản bị ném ra thị trường tự do !`);
 
             // Nếu chết đúng lúc đang tới lượt, chuyển lượt ngay
             if (teamOrder[turnIndex] === teamId) {
@@ -180,7 +196,7 @@ io.on('connection', (socket) => {
                         break;
                     }
                 }
-                if (found) hasRolled = false;
+                if (found) turnState.hasRolled = false; // Reset turn state for the new player
             }
 
             checkWinner();
@@ -191,7 +207,7 @@ io.on('connection', (socket) => {
         const alive = teamOrder.filter(id => !teams[id].bankrupt);
         if (alive.length === 1) {
             io.emit('gameOver', { winner: teams[alive[0]] });
-            io.emit('actionLog', `🏆 <b>${teams[alive[0]].name}</b> ĐÃ TRỞ THÀNH KẺ ĐỘC QUYỀN DUY NHẤT. GAME OVER!`);
+            io.emit('actionLog', `🏆 <b>${teams[alive[0]].name}</b> ĐÃ TRỞ THÀNH KẺ ĐỘC QUYỀN DUY NHẤT.GAME OVER!`);
         }
     }
 
@@ -216,10 +232,10 @@ io.on('connection', (socket) => {
             }
 
             io.emit('diceRolled', { teamId: myTeam, dice, newPos: team.position, msgStart });
-            // gameState sent after UI handles dice roll animation
+            // gameState sent after UI handles dice roll animation (approx 2.5s)
             setTimeout(() => {
                 io.emit('gameState', getGameState());
-            }, 1000);
+            }, 3000);
         }
     });
 
@@ -243,8 +259,9 @@ io.on('connection', (socket) => {
                     // Đối phương nhận được 1/2 số tiền thâu tóm (coi như bán lại cưỡng chế)
                     teams[oldOwner].money += Math.floor(takeoverPrice / 2);
                     boardState[propertyIndex] = { owner: myTeam, level: property.level };
+                    io.emit('propertyBought', { teamId: myTeam, index: propertyIndex, type: 'takeover' });
                     io.emit('gameState', getGameState());
-                    io.emit('actionLog', `⚔️ <b>${team.name}</b> đã THÂU TÓM thô bạo tài sản của <b>${teams[oldOwner].name}</b> tại ô ${propertyIndex}!`);
+                    io.emit('actionLog', `⚔️ <b>${team.name}</b> đã THÂU TÓM thô bạo tài sản của < b > ${teams[oldOwner].name}</b > tại ô ${propertyIndex} !`);
                     checkBankrupt(oldOwner); // Có thể cứu hoặc đẩy đối phương vào phá sản
                 }
             }
@@ -275,6 +292,7 @@ io.on('connection', (socket) => {
             if (team.money >= price && boardState[propertyIndex] === null) {
                 team.money -= price;
                 boardState[propertyIndex] = { owner: myTeam, level: 1 };
+                io.emit('propertyBought', { teamId: myTeam, index: propertyIndex, type: 'buy' });
                 io.emit('gameState', getGameState());
                 io.emit('actionLog', `💼 <b>${team.name}</b> đã thâu tóm khởi nghiệp tại ô ${propertyIndex}. Tiến vào thị trường!`);
             }
@@ -291,8 +309,9 @@ io.on('connection', (socket) => {
             if (team.money >= price && boardState[propertyIndex] && boardState[propertyIndex].owner === myTeam && boardState[propertyIndex].level === 1) {
                 team.money -= price;
                 boardState[propertyIndex].level = 2; // Level 2: Monopoly
+                io.emit('propertyUpgraded', { teamId: myTeam, index: propertyIndex });
                 io.emit('gameState', getGameState());
-                io.emit('actionLog', `🚀 <b>${team.name}</b> đã NÂNG CẤP ĐỘC QUYỀN tại ô ${propertyIndex}! Giá dịch vụ tăng x3.`);
+                io.emit('actionLog', `🚀 <b>${team.name}</b> đã NÂNG CẤP ĐỘC QUYỀN tại ô ${propertyIndex} !Giá dịch vụ tăng x3.`);
             }
         }
     });
@@ -311,7 +330,7 @@ io.on('connection', (socket) => {
                 const actualRent = ownerObj.level === 2 ? baseRent * 3 : baseRent;
                 team.money -= actualRent;
                 teams[ownerObj.owner].money += actualRent;
-                io.emit('actionLog', `💸 <b>${team.name}</b> bị <b>${teams[ownerObj.owner].name}</b> bóc lột ${actualRent} Tr!`);
+                io.emit('actionLog', `💸 <b>${team.name}</b> bị < b > ${teams[ownerObj.owner].name}</b > bóc lột ${actualRent} Tr!`);
                 checkBankrupt(myTeam);
                 io.emit('gameState', getGameState());
             }
@@ -328,7 +347,7 @@ io.on('connection', (socket) => {
             const actualTax = amount + (teamSize * 1); // Cộng thêm 1M cho mỗi thành viên (quản lý cồng kềnh)
 
             team.money -= actualTax;
-            io.emit('actionLog', `🏛️ <b>${team.name}</b> bị phạt ${actualTax}M (Đã tính phí hệ thống cho ${teamSize} nhân sự) vì: ${reason}`);
+            io.emit('actionLog', `🏛️ <b>${team.name}</b> bị phạt ${actualTax} M(Đã tính phí hệ thống cho ${teamSize} nhân sự) vì: ${reason} `);
             checkBankrupt(myTeam);
             io.emit('gameState', getGameState());
         }
@@ -342,11 +361,11 @@ io.on('connection', (socket) => {
                 const earned = Math.floor(Math.random() * 2) + 1; // 1 hoặc 2 M
                 teams[myTeam].money += earned;
                 socket.emit('workedSuccess', earned, 15);
-                socket.broadcast.emit('chatMessage', `👨‍💻 <b>${socket.playerName || 'Một nhân viên'}</b> vừa Tăng ca (OT) đem về <b>${earned}M</b> cho ${teams[myTeam].name}!`);
+                socket.broadcast.emit('chatMessage', `👨‍💻 <b>${socket.playerName || 'Một nhân viên'}</b> vừa Tăng ca(OT) đem về < b > ${earned}M</b > cho ${teams[myTeam].name} !`);
                 io.emit('gameState', getGameState());
             } else {
                 const left = Math.ceil((15000 - (now - socket.lastWorked)) / 1000);
-                socket.emit('errorMsg', `Bạn đang kiệt sức! Mác nói cấm bóc lột quá mức. Chờ thêm ${left}s.`);
+                socket.emit('errorMsg', `Bạn đang kiệt sức! Mác nói cấm bóc lột quá mức.Chờ thêm ${left} s.`);
             }
         }
     });
@@ -371,8 +390,8 @@ io.on('connection', (socket) => {
                 turnState.hasPulledChance = false;
                 io.emit('gameState', getGameState());
 
-                // Random Global Event (15% chance to spice things up)
-                if (Math.random() < 0.15) {
+                // Random Global Event (5% chance to spice things up)
+                if (Math.random() < 0.05) {
                     const ev = globalEvents[Math.floor(Math.random() * globalEvents.length)];
                     teamOrder.forEach(tId => {
                         if (!teams[tId].bankrupt) {
@@ -390,7 +409,30 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (myTeam) {
             teamMembers[myTeam].delete(socket.id);
-            // Optionally handle empty team logic, but for a 4-team game we just leave it
+        }
+    });
+
+    socket.on('sellProperty', (propertyIndex) => {
+        if (!gameStarted) return;
+        if (myTeam) {
+            const team = teams[myTeam];
+            const property = boardState[propertyIndex];
+
+            if (property && property.owner === myTeam) {
+                const spaceData = getSpaceData(propertyIndex);
+                if (!spaceData || spaceData.type !== 'prop') return;
+
+                // Refund 70% of original price
+                const refund = Math.floor(spaceData.price * 0.7);
+                team.money += refund;
+                boardState[propertyIndex] = null;
+
+                io.emit('gameState', getGameState());
+                io.emit('actionLog', `🏦 <b>${team.name}</b> đã bán tài sản tại ô ${propertyIndex} để thu về <b>${refund}M</b>.`);
+
+                // If they were selling to pay off debt, check if they are still bankrupt
+                checkBankrupt(myTeam);
+            }
         }
     });
 
@@ -407,7 +449,8 @@ io.on('connection', (socket) => {
                 team2: teamMembers.team2.size,
                 team3: teamMembers.team3.size,
                 team4: teamMembers.team4.size
-            }
+            },
+            turnState // Include this so client knows who can roll/buy
         };
     }
 });

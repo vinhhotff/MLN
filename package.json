@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
+    "@3d-dice/dice-ui": "^0.5.2",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"
   }

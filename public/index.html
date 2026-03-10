@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.onerror = function (msg, source, lineno, colno, error) {
+            fetch('/logError', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ msg, source, lineno, colno, stack: error ? error.stack : '' })
+            }).catch(e => console.error("Logger failed", e));
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            fetch('/logError', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ msg: "Unhandled Promise Rejection: " + event.reason, stack: event.reason ? event.reason.stack : '' })
+            });
+        });
+    </script>
 </head>
 
 <body>
@@ -38,10 +54,32 @@
 
     <div id="game-screen" style="display: none;">
         <div class="left-panel">
-            <div id="dice-container"
-                style="position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events:none; z-index:300;">
+            <div id="dice-overlay" class="dice-overlay">
+                <div class="dice-glow"></div>
+                <div class="dice-container-2d">
+                    <div id="dice-box-2d" class="dice-box-2d">
+                        <div class="dice-pip-container" id="dice-pips">
+                            <!-- Pips injected by JS -->
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="dice-result-container" style="position: absolute; top:20px; z-index: 310;">
+            <div id="chance-overlay" class="chance-overlay">
+                <div class="chance-card-3d" id="chance-card-inner">
+                    <div class="card-face card-front">
+                        <div class="card-shimmer"></div>
+                        <i class="fas fa-question-circle card-icon"></i>
+                        <div class="card-title">CƠ HỘI?</div>
+                        <div class="card-info">Nhấp để lật thẻ</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <i id="chance-icon-back" class="fas fa-magic card-icon"></i>
+                        <div id="chance-title-back" class="card-title">TIÊU ĐỀ</div>
+                        <div id="chance-info-back" class="card-info">Nội dung thẻ sẽ hiện ở đây...</div>
+                    </div>
+                </div>
+            </div>
+            <div id="dice-result-container" style="position: absolute; top:20px; z-index: 310; display:none;">
                 <div id="dice-result">?</div>
             </div>
             <div id="board-container">
@@ -91,8 +129,10 @@
         </div>
     </div>
 
+
+
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>
