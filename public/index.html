@@ -38,8 +38,10 @@
 
     <div id="game-screen" style="display: none;">
         <div class="left-panel">
-            <div id="dice-container">
-                <i class="fas fa-dice fa-spin" id="dice-icon" style="display:none;"></i>
+            <div id="dice-container"
+                style="position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events:none; z-index:300;">
+            </div>
+            <div id="dice-result-container" style="position: absolute; top:20px; z-index: 310;">
                 <div id="dice-result">?</div>
             </div>
             <div id="board-container">
@@ -90,7 +92,7 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>

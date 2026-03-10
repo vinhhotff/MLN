@@ -609,33 +609,7 @@ body {
     color: #1d3557 !important;
 }
 
-/* ---- NEW ANIMATIONS ---- */
-@keyframes diceRollAnim {
-    0% {
-        transform: rotate(0deg) scale(1) translateY(0);
-    }
-
-    25% {
-        transform: rotate(90deg) scale(1.2) translateY(-30px);
-    }
-
-    50% {
-        transform: rotate(180deg) scale(1) translateY(0);
-    }
-
-    75% {
-        transform: rotate(270deg) scale(1.2) translateY(-20px);
-    }
-
-    100% {
-        transform: rotate(360deg) scale(1) translateY(0);
-    }
-}
-
-.dice-rolling {
-    animation: diceRollAnim 0.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
-    display: inline-block;
-}
+/* Removed 2D dice animation */
 
 @keyframes screenShake {
     0% {

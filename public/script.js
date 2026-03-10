@@ -52,6 +52,8 @@ const diceResult = document.getElementById('dice-result');
 const diceIcon = document.getElementById('dice-icon');
 const workBtn = document.getElementById('workBtn');
 
+import DiceBox from 'https://unpkg.com/@3d-dice/dice-box@1.1.4/dist/dice-box.es.min.js';
+
 let myTeam = null;
 let playerName = "";
 let currentGameState = null;
@@ -262,20 +264,29 @@ socket.on('countdownUpdate', (seconds) => {
     }
 });
 
+// Init DiceBox
+const diceBox = new DiceBox("#dice-container", {
+    assetPath: "https://unpkg.com/@3d-dice/dice-box@1.1.4/dist/assets/",
+    theme: "default",
+    scale: 6,
+    spinForce: 6,
+    throwForce: 6
+});
+diceBox.init();
+
 socket.on('diceRolled', (data) => {
     const { teamId, dice, newPos, msgStart } = data;
     const teamName = currentGameState.teams[teamId].name;
 
-    // Animate dice
+    // Hide old result
     diceResult.style.display = 'none';
-    diceIcon.style.display = 'inline-block';
-    diceIcon.classList.add('dice-rolling');
 
-    setTimeout(() => {
-        diceIcon.classList.remove('dice-rolling');
-        diceIcon.style.display = 'none';
+    // Roll 3D dice
+    diceBox.roll(`1d6@${dice}`).then((result) => {
         diceResult.style.display = 'block';
         diceResult.textContent = dice;
+
+        diceBox.clear(); // Clear 3D dice to keep screen clean
 
         addChat(`🎲 <b>${teamName}</b> tung được <b>${dice}</b>. ${msgStart}`);
 
@@ -283,7 +294,7 @@ socket.on('diceRolled', (data) => {
         if (teamId === myTeam) {
             handlePostRoll(newPos);
         }
-    }, 1000);
+    });
 });
 
 socket.on('chancePulled', (data) => {
