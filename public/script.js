@@ -191,6 +191,7 @@ socket.on('errorMsg', (msg) => {
     Swal.fire('Thất bại', msg, 'error');
     joinBtn.disabled = false;
     joinBtn.textContent = 'Tham Gia Thị Trường';
+    spectateBtn.disabled = false;
 });
 
 socket.on('joinSuccess', () => {

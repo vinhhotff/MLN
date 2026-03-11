@@ -103,6 +103,10 @@ io.on('connection', (socket) => {
     let isSpectator = false;
 
     socket.on('joinSpectator', (playerName) => {
+        if (spectators.size >= 1) {
+            socket.emit('errorMsg', 'Phòng quan sát đã đầy! Chỉ cho phép 1 khán giả duy nhất.');
+            return;
+        }
         isSpectator = true;
         socket.playerName = playerName;
         spectators.add(socket.id);
