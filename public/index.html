@@ -44,7 +44,12 @@
                     Dương</button>
             </div>
 
-            <button id="joinBtn" disabled>Tham Gia Thị Trường</button>
+            <div style="display:flex; gap:10px;">
+                <button id="joinBtn" disabled style="flex:2;">Tham Gia Thị Trường</button>
+                <button id="spectateBtn"
+                    style="flex:1; background:#6c757d; color:white; border:none; border-radius:10px; padding:12px; cursor:pointer; font-weight:bold;"><i
+                        class="fas fa-eye"></i> Xem</button>
+            </div>
             <div id="countdown-display"
                 style="display: none; margin-top: 15px; color: #ffd166; font-weight: bold; font-size: 1.2rem;">
                 Trò chơi sẽ bắt đầu sau: <span id="timer-sec">60</span>s
@@ -125,6 +130,17 @@
 
             <div id="chat-box">
                 <div id="chat-messages"></div>
+            </div>
+
+            <div id="spectator-controls" style="display:none; margin-top:10px;">
+                <div
+                    style="background:rgba(217, 4, 41, 0.1); border:1px solid #d90429; padding:10px; border-radius:10px; text-align:center;">
+                    <p style="color:#d90429; font-weight:bold; font-size:0.8rem; margin-bottom:8px;">QUẢN TRỊ TRẬN ĐẤU
+                    </p>
+                    <button id="resetGameBtn"
+                        style="width:100%; padding:10px; background:#d90429; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"><i
+                            class="fas fa-redo"></i> Reset Ván Đấu</button>
+                </div>
             </div>
         </div>
     </div>

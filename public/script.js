@@ -67,6 +67,11 @@ let pendingChanceResult = null;
 let teamTokens = {}; // Store persistent tokens
 let resizeTimeout = null;
 let isRolling = false; // Lock UI updates during dice animation
+let isSpectator = false;
+
+const spectateBtn = document.getElementById('spectateBtn');
+const resetGameBtn = document.getElementById('resetGameBtn');
+const spectatorControls = document.getElementById('spectator-controls');
 
 // Handle window resize to reposition tokens
 window.addEventListener('resize', () => {
@@ -146,6 +151,26 @@ joinBtn.addEventListener('click', () => {
     joinBtn.textContent = 'Đang tham gia...';
 });
 
+spectateBtn.addEventListener('click', () => {
+    playerName = nameInput.value.trim() || 'Khán giả';
+    socket.emit('joinSpectator', playerName);
+    spectateBtn.disabled = true;
+});
+
+resetGameBtn.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Xác nhận Reset?',
+        text: 'Toàn bộ ván đấu sẽ bị hủy và bắt đầu lại từ đầu!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d90429'
+    }).then(res => {
+        if (res.isConfirmed) {
+            socket.emit('resetGame');
+        }
+    });
+});
+
 socket.on('errorMsg', (msg) => {
     Swal.fire('Thất bại', msg, 'error');
     joinBtn.disabled = false;
@@ -155,6 +180,17 @@ socket.on('errorMsg', (msg) => {
 socket.on('joinSuccess', () => {
     loginScreen.style.display = 'none';
     gameScreen.style.display = 'flex';
+});
+
+socket.on('spectatorJoinSuccess', () => {
+    isSpectator = true;
+    loginScreen.style.display = 'none';
+    gameScreen.style.display = 'flex';
+    spectatorControls.style.display = 'block';
+});
+
+socket.on('gameReset', () => {
+    window.location.reload();
 });
 
 // Controls
@@ -643,7 +679,7 @@ function updateUI() {
             }
 
             // Show sell button if it's my property and I'm in debt OR it's my turn
-            if (obj.owner === myTeam && (teams[myTeam].money < 0 || turn === myTeam)) {
+            if (!isSpectator && obj.owner === myTeam && (teams[myTeam].money < 0 || turn === myTeam)) {
                 if (sellBtnElement) sellBtnElement.style.display = 'block';
             }
         }
@@ -656,8 +692,23 @@ function updateUI() {
         rollBtn.disabled = true;
         buyBtn.disabled = true;
         upgradeBtn.disabled = true;
+        takeoverBtn.style.display = 'none';
         chanceBtn.style.display = 'none';
         endBtn.disabled = true;
+        return;
+    }
+
+    if (isSpectator) {
+        const tName = turn && teams[turn] ? teams[turn].name : '...';
+        turnIndicator.innerHTML = `👁️ Bạn đang xem lượt của <b>${tName}</b>`;
+        turnIndicator.style.background = 'rgba(255, 255, 255, 0.1)';
+        rollBtn.style.display = 'none';
+        buyBtn.style.display = 'none';
+        upgradeBtn.style.display = 'none';
+        takeoverBtn.style.display = 'none';
+        chanceBtn.style.display = 'none';
+        endBtn.style.display = 'none';
+        workBtn.style.display = 'none';
         return;
     }
 

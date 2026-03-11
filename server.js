@@ -16,10 +16,10 @@ app.post('/logError', (req, res) => {
 
 // 4 Teams config
 let teams = {
-    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 100, position: 0, bankrupt: false },
-    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 100, position: 0, bankrupt: false },
-    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 100, position: 0, bankrupt: false },
-    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 100, position: 0, bankrupt: false }
+    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 30, position: 0, bankrupt: false },
+    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 30, position: 0, bankrupt: false },
+    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 30, position: 0, bankrupt: false },
+    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 30, position: 0, bankrupt: false }
 };
 
 let teamMembers = {
@@ -28,6 +28,7 @@ let teamMembers = {
     team3: new Set(),
     team4: new Set()
 };
+let spectators = new Set();
 
 let boardState = Array(28).fill(null); // stores { owner: 'teamId', level: 1 }
 let turnIndex = 0;
@@ -99,6 +100,16 @@ const globalEvents = [
 
 io.on('connection', (socket) => {
     let myTeam = null;
+    let isSpectator = false;
+
+    socket.on('joinSpectator', (playerName) => {
+        isSpectator = true;
+        socket.playerName = playerName;
+        spectators.add(socket.id);
+        socket.emit('spectatorJoinSuccess');
+        io.emit('chatMessage', `👁️ <b>${playerName}</b> đang theo dõi trận đấu.`);
+        io.emit('gameState', getGameState());
+    });
 
     socket.on('joinTeam', (teamId, playerName) => {
         if (gameStarted && !teamOrder.includes(teamId)) {
@@ -409,6 +420,39 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (myTeam) {
             teamMembers[myTeam].delete(socket.id);
+        }
+        if (isSpectator) {
+            spectators.delete(socket.id);
+        }
+    });
+
+    socket.on('resetGame', () => {
+        // Only spectators or anyone? User said spectre can reset.
+        if (isSpectator || myTeam) {
+            // Reset everything
+            teams = {
+                team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 30, position: 0, bankrupt: false },
+                team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 30, position: 0, bankrupt: false },
+                team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 30, position: 0, bankrupt: false },
+                team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 30, position: 0, bankrupt: false }
+            };
+            boardState = Array(28).fill(null);
+            turnIndex = 0;
+            teamOrder = [];
+            gameStarted = false;
+            countdownStarted = false;
+            countdownTimer = 60;
+            turnState = {
+                hasRolled: false,
+                hasPaidRentOrTax: false,
+                hasPulledChance: false
+            };
+            // Clear members? Yes, force everyone back to lobby
+            Object.keys(teamMembers).forEach(t => teamMembers[t].clear());
+            spectators.clear();
+
+            io.emit('gameReset');
+            io.emit('actionLog', `🔄 <b>${socket.playerName || 'Hệ thống'}</b> đã khởi động lại ván đấu !`);
         }
     });
 
