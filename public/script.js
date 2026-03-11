@@ -51,6 +51,7 @@ const endBtn = document.getElementById('endBtn');
 const diceResult = document.getElementById('dice-result');
 const diceIcon = document.getElementById('dice-icon');
 const workBtn = document.getElementById('workBtn');
+const testBankruptBtn = document.getElementById('testBankruptBtn');
 const diceOverlay = document.getElementById('dice-overlay');
 const diceBox2d = document.getElementById('dice-box-2d');
 const dicePips = document.getElementById('dice-pips');
@@ -167,6 +168,21 @@ resetGameBtn.addEventListener('click', () => {
     }).then(res => {
         if (res.isConfirmed) {
             socket.emit('resetGame');
+        }
+    });
+});
+
+testBankruptBtn.addEventListener('click', () => {
+    Swal.fire({
+        title: 'Bạn chắc chứ?',
+        text: 'Hành động này sẽ khiến tập đoàn của bạn phá sản ngay lập tức!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d90429',
+        confirmButtonText: 'Tôi muốn phá sản!'
+    }).then(res => {
+        if (res.isConfirmed) {
+            socket.emit('debugBankruptcy');
         }
     });
 });

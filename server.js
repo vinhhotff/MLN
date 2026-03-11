@@ -16,10 +16,10 @@ app.post('/logError', (req, res) => {
 
 // 4 Teams config
 let teams = {
-    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 30, position: 0, bankrupt: false },
-    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 30, position: 0, bankrupt: false },
-    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 30, position: 0, bankrupt: false },
-    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 30, position: 0, bankrupt: false }
+    team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 50, position: 0, bankrupt: false },
+    team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 50, position: 0, bankrupt: false },
+    team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 50, position: 0, bankrupt: false },
+    team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 50, position: 0, bankrupt: false }
 };
 
 let teamMembers = {
@@ -431,10 +431,10 @@ io.on('connection', (socket) => {
         if (isSpectator || myTeam) {
             // Reset everything
             teams = {
-                team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 30, position: 0, bankrupt: false },
-                team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 30, position: 0, bankrupt: false },
-                team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 30, position: 0, bankrupt: false },
-                team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 30, position: 0, bankrupt: false }
+                team1: { id: 'team1', name: 'Tập đoàn Đỏ', color: '#e63946', icon: 'fa-building', money: 50, position: 0, bankrupt: false },
+                team2: { id: 'team2', name: 'Liên minh Xanh Lá', color: '#2a9d8f', icon: 'fa-leaf', money: 50, position: 0, bankrupt: false },
+                team3: { id: 'team3', name: 'Đế chế Vàng', color: '#e9c46a', icon: 'fa-crown', money: 50, position: 0, bankrupt: false },
+                team4: { id: 'team4', name: 'Cá mập Xanh', color: '#457b9d', icon: 'fa-fish', money: 50, position: 0, bankrupt: false }
             };
             boardState = Array(28).fill(null);
             turnIndex = 0;
@@ -477,6 +477,20 @@ io.on('connection', (socket) => {
                 // If they were selling to pay off debt, check if they are still bankrupt
                 checkBankrupt(myTeam);
             }
+        }
+    });
+
+    socket.on('debugBankruptcy', () => {
+        if (myTeam && gameStarted) {
+            teams[myTeam].money = -1;
+            // Clear their properties immediately to skip selling
+            for (let i = 0; i < boardState.length; i++) {
+                if (boardState[i] && boardState[i].owner === myTeam) {
+                    boardState[i] = null;
+                }
+            }
+            checkBankrupt(myTeam);
+            io.emit('gameState', getGameState());
         }
     });
 
